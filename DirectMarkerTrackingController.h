@@ -31,6 +31,10 @@ public:
     // ------------------------------------------------------------------------
     void computeControls(const SimTK::State & s, SimTK::Vector & controls) const;
 
+private:
+    static const numSpatialDims;
+
+
 };
 
 } // namespace OpenSim

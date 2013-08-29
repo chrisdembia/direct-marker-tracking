@@ -2,6 +2,8 @@
 
 using namespace OpenSim;
 
+DirectMarkerTrackingController::numSpatialDims = 3;
+
 DirectMarkerTrackingController::DirectMarkerTrackingController()
 {
     setNull();
@@ -16,11 +18,11 @@ void DirectMarkerTrackingController::computeControls(
     // Build Jacobian.
     // ========================================================================
     Matrix Jacobian;
-    Jacobian.resize(numMarkers * numSpatialDimensions, numDegreesOfFreedom);
+    Jacobian.resize(numMarkers * numSpatialDims, numDegreesOfFreedom);
 
     // For each marker, compute a Jacobian.
     // ------------------------------------------------------------------------
-    // Each of these Jacobians is numSpatialDimensions x numDegreesOfFreedom.
+    // Each of these Jacobians is numSpatialDims x numDegreesOfFreedom.
     for (int iMarker = 0; iMarker < numMarkers; iMarker++)
     {
         // TODO
@@ -33,8 +35,8 @@ void DirectMarkerTrackingController::computeControls(
     // Assemble desired task vector from marker positions.
     // =======================================================================
     Vector taskDesired; // TODO is resize necessary?
-    taskDesired.resize(numMarkers * numSpatialDimensions);
-    taskDotDesired.resize(numMarkers * numSpatialDimensions);
+    taskDesired.resize(numMarkers * numSpatialDims);
+    taskDotDesired.resize(numMarkers * numSpatialDims);
 
     // TODO expressed in what frame(s)?
     // Expressed in the ground frame.
@@ -80,7 +82,7 @@ void DirectMarkerTrackingController::computeControls(
     // Compute task-space actuation necessary to achieve above accelerations.
     // ========================================================================
     // F = Lambda * Fstar + mu + p
-    Vector taskSpaceActuation = taskSpaceMassMatrix * desiredTaskAcceleration
+    Vector taskSpaceActuation = taskSpaceMassMatrix(s) * desiredTaskAcceleration
                               + taskSpaceCoriolis
                               + taskSpaceGravity;
 
