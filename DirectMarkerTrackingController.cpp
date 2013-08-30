@@ -15,6 +15,9 @@ void DirectMarkerTrackingController::computeControls(
 {
     // TODO assuming only one level tasks for now.
 
+    // Get joint-space mass matrix A.
+
+
     // Build Jacobian.
     // ========================================================================
     Matrix Jacobian;
@@ -49,13 +52,13 @@ void DirectMarkerTrackingController::computeControls(
     for (unsigned int iMarker = 0; iMarker < numMarkers; iMarker++)
     {
         // Position.
-        markers.getValues(s, markerPositions);
+        _markerRef.getValues(s, markerPositions);
         taskDesired[numSpaceDims * iMarker] = markerPositions[iMarker][0];
         taskDesired[numSpaceDims * iMarker + 1] = markerPositions[iMarker][1];
         taskDesired[numSpaceDims * iMarker + 2] = markerPositions[iMarker][2];
 
         // Velocity.
-        markers.getSpeedValues(s, markerVelocities);
+        _markerRef.getSpeedValues(s, markerVelocities);
         taskDesired[numSpaceDims * iMarker] = markerVelocities[iMarker][0];
         taskDesired[numSpaceDims * iMarker + 1] = markerVelocities[iMarker][1];
         taskDesired[numSpaceDims * iMarker + 2] = markerVelocities[iMarker][2];
@@ -65,9 +68,10 @@ void DirectMarkerTrackingController::computeControls(
     // ========================================================================
 
     // xd = J * qd
-    Vecotr taskDot = Jacobian * s.getQDot();
+    Vecotr taskDot = Jacobian * s.getU();
 
     // xdd = Jd * qd + J * qdd
+    // TODO calcBiasForStationJacobian
     Vector taskDotDot = JacobianDot * s.getQDot() + Jacobian * s.getQDotDot();
 
     // Here's the control law. `controlValue` is called F* (Fstar) by Khatib.
@@ -83,8 +87,8 @@ void DirectMarkerTrackingController::computeControls(
     // ========================================================================
     // F = Lambda * Fstar + mu + p
     Vector taskSpaceActuation = taskSpaceMassMatrix(s) * desiredTaskAcceleration
-                              + taskSpaceCoriolis
-                              + taskSpaceGravity;
+                              + taskSpaceCoriolis // centrifugal
+                              + taskSpaceGravity; // Gravity::getBodyForces()
 
     // Compute joint actuation to achieve task space actuation.
     // ========================================================================
@@ -102,9 +106,10 @@ void DirectMarkerTrackingController::computeControls(
     }
 }
 
-Matrix taskSpaceMassMatrix(const SimTK::State & s) const
+Matrix taskSpaceMassMatrix(const SimTK::State & s, const Matrix & Jacobian) const
 {
-    Matrix 
+    Matrix inverseJacobian = Jacobian.inv();
+    return 
 }
 
 

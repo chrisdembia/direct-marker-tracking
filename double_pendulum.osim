@@ -263,30 +263,43 @@
             </objects>
             <groups />
         </BodySet>
-        <!--Constraints in the model.-->
-        <ConstraintSet>
-            <objects />
-            <groups />
-        </ConstraintSet>
-        <!--Forces in the model.-->
-        <ForceSet>
-            <objects />
-            <groups />
-        </ForceSet>
-        <!--Controllers in the model.-->
-        <ControllerSet name="Controllers">
-            <objects />
-            <groups />
-        </ControllerSet>
-        <!--Additional components in the model.-->
-        <ComponentSet name="MiscComponents">
-            <objects />
-            <groups />
-        </ComponentSet>
-        <!--Probes in the model.-->
-        <ProbeSet>
-            <objects />
-            <groups />
-        </ProbeSet>
-    </Model>
+        <MarkerSet>
+            <objects>
+                <Marker name="end_effector">
+                    <!--Body segment in the model on which the marker resides.-->
+                    <body> link2 </body>
+                    <!--Location of a marker on the body segment.-->
+                    <location> 0 -1.15 0</location>
+                    <!--Flag (true or false) specifying whether or not a marker should be kept fixed in the marker placement step.  i.e. If false, the marker is allowed to move.-->
+                    <fixed> false </fixed>
+            </Marker>
+        </objects>
+        <groups />
+    </MarkerSet>
+    <!--Constraints in the model.-->
+    <ConstraintSet>
+        <objects />
+        <groups />
+    </ConstraintSet>
+    <!--Forces in the model.-->
+    <ForceSet>
+        <objects />
+        <groups />
+    </ForceSet>
+    <!--Controllers in the model.-->
+    <ControllerSet name="Controllers">
+        <objects />
+        <groups />
+    </ControllerSet>
+    <!--Additional components in the model.-->
+    <ComponentSet name="MiscComponents">
+        <objects />
+        <groups />
+    </ComponentSet>
+    <!--Probes in the model.-->
+    <ProbeSet>
+        <objects />
+        <groups />
+    </ProbeSet>
+</Model>
 </OpenSimDocument>
