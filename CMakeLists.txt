@@ -52,12 +52,14 @@ MARK_AS_ADVANCED(EXECUTABLE_OUTPUT_PATH)
 MARK_AS_ADVANCED(LIBRARY_OUTPUT_PATH)
 
 # Plugin library.
-SET(PLUGIN_NAME "DirectMarkerTrackingController" CACHE STRING
+SET(PLUGIN_NAME "DirectMarkerTracking" CACHE STRING
     "Name of shared library to create")
 
 ADD_LIBRARY(${PLUGIN_NAME} SHARED
     DirectMarkerTrackingController.h
     DirectMarkerTrackingController.cpp
+    DirectMarkerTrackingTool.h
+    DirectMarkerTrackingTool.cpp
     RegisterTypes_osimPlugin.h
     RegisterTypes_osimPlugin.cpp
     osimPlugin.h

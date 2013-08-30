@@ -1,8 +1,17 @@
 #ifndef OPENSIM_DIRECTMARKERTRACKINGCONTROLLER_H_
 #define OPENSIM_DIRECTMARKERTRACKINGCONTROLLER_H_
-#include <osimPlugin.h>
+
+#include <OpenSim/OpenSim.h>
+#include "osimPlugin.h"
+
+using SimTK::Array_;
+using SimTK::MobilizedBodyIndex;
+using SimTK::Vec3;
 
 namespace OpenSim {
+
+    // TODO assuming only one level of tasks for now.
+
 
 /**
  * A controller that finds the torques necessary for a model to track
@@ -15,24 +24,33 @@ OpenSim_DECLARE_CONCRETE_OBJECT(DirectMarkerTrackingController, Controller);
 
 public:
 
-    /** @name Property declarations
-     * */
+    /// @name Property declarations
     /**@{**/
-    // TODO OpenSim_DECLARE_PROPERTY();
+    OpenSim_DECLARE_PROPERTY(speed_gain, double,
+            "Control gain (1/s) on error in marker speeds.");
+    OpenSim_DECLARE_PROPERTY(position_gain, double,
+            "Control gain (1/s^2) on error in marker positions.");
     /**@}**/
-
 
     // Constructors
     // ------------------------------------------------------------------------
     DirectMarkerTrackingController();
+    DirectMarkerTrackingController(const MarkersReference & markersRef);
 
     // Pure virtual method implementations
     // ------------------------------------------------------------------------
     void computeControls(const SimTK::State & s, SimTK::Vector & controls) const;
 
 private:
-    static const numSpatialDims;
 
+    static const int _numSpatialDims;
+
+    int _numTasks;
+
+    const MarkersReference & _markersRef;
+    const int _numMarkers;
+    Array_<MobilizedBodyIndex> _mobilizedBodyIndices;
+    Array_<Vec3> _stationPositionsInBodies;
 
 };
 
