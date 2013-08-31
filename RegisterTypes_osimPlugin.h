@@ -22,7 +22,7 @@
  * limitations under the License.                                             *
  * -------------------------------------------------------------------------- */
 
-#include "osimPluginDLL.h"
+#include "osimPlugin.h"
 
 
 extern "C" {

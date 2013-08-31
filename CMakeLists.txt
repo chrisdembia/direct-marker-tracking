@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 2.6)
 SET(KIT plugin)
 SET(UKIT PLUGIN)
 
-SET(NameSpace "OpenSim_")
+SET(NameSpace "")
 
 SET(CMAKE_CONFIGURATION_TYPES "RelWithDebInfo;Release"
       CACHE STRING "Semicolon separated list of supported configuration types, only supports Debug, Release, MinSizeRel, and RelWithDebInfo, anything else will be ignored." FORCE )
@@ -14,11 +14,6 @@ SET(EXPORT_MACRO OSIM${UKIT}_EXPORTS)
 
 SET(OPENSIM_INSTALL_DIR "" CACHE PATH 
     "Top-level directory of OpenSim install")
-
-IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-	SET(CMAKE_INSTALL_PREFIX ${OPENSIM_INSTALL_DIR}/ CACHE PATH 
-        "Install path prefix." FORCE)
-ENDIF()
 
 ### HEADERS
 SET(OPENSIM_HEADERS_DIR ${OPENSIM_INSTALL_DIR}/sdk/include)
@@ -53,13 +48,13 @@ MARK_AS_ADVANCED(LIBRARY_OUTPUT_PATH)
 
 # Plugin library.
 SET(PLUGIN_NAME "DirectMarkerTracking" CACHE STRING
-    "Name of shared library to create")
+    "Name of shared library to create.")
 
-ADD_LIBRARY(${PLUGIN_NAME} SHARED
-    DirectMarkerTrackingController.h
-    DirectMarkerTrackingController.cpp
+ADD_LIBRARY(${PLUGIN_NAME}
     DirectMarkerTrackingTool.h
     DirectMarkerTrackingTool.cpp
+    DirectMarkerTrackingController.h
+    DirectMarkerTrackingController.cpp
     RegisterTypes_osimPlugin.h
     RegisterTypes_osimPlugin.cpp
     osimPlugin.h
@@ -70,9 +65,13 @@ SET_TARGET_PROPERTIES(
 	DEFINE_SYMBOL ${EXPORT_MACRO}
 	PROJECT_LABEL "Libraries - ${PLUGIN_NAME}")
 
-INSTALL_TARGETS(/plugins RUNTIME_DIRECTORY /plugins  ${PLUGIN_NAME})
 
 # Executable.
-#ADD_EXECUTABLE(tracker tracker.cpp)
-#TARGET_LINK_LIBRARIES(tracker ${PLUGIN_NAME})
+ADD_EXECUTABLE(opensim-tracker tracker.cpp)
+TARGET_LINK_LIBRARIES(opensim-tracker ${PLUGIN_NAME})
 
+INSTALL_TARGETS(. ${PLUGIN_NAME} opensim-tracker)
+
+INSTALL_FILES(. FILES
+    ${CMAKE_SOURCE_DIR}/double_pendulum.osim
+    ${CMAKE_SOURCE_DIR}/markers.trc)

@@ -25,8 +25,8 @@
 #include <OpenSim/Common/Object.h>
 #include "RegisterTypes_osimPlugin.h"
 
-#include "DirectMarkerTrackingController.h"
 #include "DirectMarkerTrackingTool.h"
+#include "DirectMarkerTrackingController.h"
 
 using namespace OpenSim;
 using namespace std;
@@ -40,8 +40,8 @@ static dllObjectInstantiator instantiator;
  */
 OSIMPLUGIN_API void RegisterTypes_osimPlugin()
 {
-	Object::RegisterType( DirectMarkerTrackingController() );
-	Object::RegisterType( DirectMarkerTrackingTool() );
+    Object::RegisterType( DirectMarkerTrackingTool() );
+    Object::RegisterType( DirectMarkerTrackingController() );
 }
 
 dllObjectInstantiator::dllObjectInstantiator() 
