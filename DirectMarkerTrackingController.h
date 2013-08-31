@@ -35,7 +35,7 @@ public:
     // CONSTRUCTION
     //--------------------------------------------------------------------------
     DirectMarkerTrackingController();
-    DirectMarkerTrackingController(Model * model, MarkersReference *markersRef);
+    DirectMarkerTrackingController(MarkersReference *markersRef);
 
     //--------------------------------------------------------------------------
     // GET AND SET
@@ -61,12 +61,16 @@ public:
     //--------------------------------------------------------------------------
     // INTERFACE
     //--------------------------------------------------------------------------
-    void computeControls(const SimTK::State & s, SimTK::Vector & controls) const;
+    void computeControls(const SimTK::State & s,
+                         SimTK::Vector & controls) const;
+
+protected:
+
+    void connectToModel(Model & model) OVERRIDE_11;
 
 private:
 
     void constructProperties();
-
 
     static const int _numSpaceDims;
 

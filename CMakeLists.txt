@@ -65,12 +65,25 @@ SET_TARGET_PROPERTIES(
 	DEFINE_SYMBOL ${EXPORT_MACRO}
 	PROJECT_LABEL "Libraries - ${PLUGIN_NAME}")
 
-
 # Executable.
 ADD_EXECUTABLE(opensim-tracker tracker.cpp)
 TARGET_LINK_LIBRARIES(opensim-tracker ${PLUGIN_NAME})
 
 INSTALL_TARGETS(. ${PLUGIN_NAME} opensim-tracker)
+
+FILE(GLOB DATA_FILES
+    ${CMAKE_SOURCE_DIR}/double_pendulum.osim
+    ${CMAKE_SOURCE_DIR}/double_pendulum_tracker_setup.xml
+    ${CMAKE_SOURCE_DIR}/markers.trc)
+
+FOREACH (dataFile ${DATA_FILES})
+    ADD_CUSTOM_COMMAND(
+        TARGET opensim-tracker
+        COMMAND ${CMAKE_COMMAND}
+        ARGS -E copy
+        ${dataFile}
+        ${CMAKE_BINARY_DIR})
+ENDFOREACH (dataFile) 
 
 INSTALL_FILES(. FILES
     ${CMAKE_SOURCE_DIR}/double_pendulum.osim
