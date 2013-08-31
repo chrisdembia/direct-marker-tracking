@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<OpenSimDocument Version="30000">
+	<DirectMarkerTrackingTool name="double_pendulum_example">
+		<!--Path to marker file (.trc) containing marker locations to track.-->
+		<marker_file>markers.trc</marker_file>
+		<!--Name of the .osim file used to construct a model.-->
+        <model_file>double_pendulum.osim</model_file>
+		<!--Replace the model's force set with sets specified in <force_set_files>? If false, the force set is appended to.-->
+		<replace_force_set>true</replace_force_set>
+		<!--List of xml files used to construct an force set for the model.-->
+		<force_set_files />
+		<!--Directory used for writing results.-->
+		<results_directory>results</results_directory>
+		<!--Output precision.  It is 8 by default.-->
+		<output_precision>8</output_precision>
+		<!--Initial time for the simulation.-->
+		<initial_time>0</initial_time>
+		<!--Final time for the simulation.-->
+		<final_time>2</final_time>
+		<!--Flag indicating whether or not to compute equilibrium values for states other than the coordinates or speeds.  For example, equilibrium muscle fiber lengths or muscle forces.-->
+		<solve_for_equilibrium_for_auxiliary_states>false</solve_for_equilibrium_for_auxiliary_states>
+		<!--Maximum number of integrator steps.-->
+		<maximum_number_of_integrator_steps>20000</maximum_number_of_integrator_steps>
+		<!--Maximum integration step size.-->
+		<maximum_integrator_step_size>1</maximum_integrator_step_size>
+		<!--Minimum integration step size.-->
+		<minimum_integrator_step_size>1e-08</minimum_integrator_step_size>
+		<!--Integrator error tolerance. When the error is greater, the integrator step size is decreased.-->
+		<integrator_error_tolerance>1e-05</integrator_error_tolerance>
+		<!--Set of analyses to be run during the investigation.-->
+		<AnalysisSet name="Analyses">
+			<objects />
+			<groups />
+		</AnalysisSet>
+		<!--Controller objects in the model.-->
+		<ControllerSet name="Controllers">
+			<objects />
+			<groups />
+		</ControllerSet>
+		<!--XML file (.xml) containing the forces applied to the model as ExternalLoads.-->
+		<external_loads_file />
+	</DirectMarkerTrackingTool>
+</OpenSimDocument>

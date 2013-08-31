@@ -82,6 +82,7 @@ private:
     SimTK::Array_<SimTK::MobilizedBodyIndex> _mobilizedBodyIndices;
     SimTK::Array_<SimTK::Vec3> _stationPositionsInBodies;
 
+    mutable int _count;//TODO
 };
 
 } // namespace

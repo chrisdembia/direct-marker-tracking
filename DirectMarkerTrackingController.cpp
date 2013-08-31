@@ -33,6 +33,7 @@ DirectMarkerTrackingController::DirectMarkerTrackingController(
     // TODO may not need this member variable?
     _numMarkers = _markersRef->getNumRefs();
     _numTasks = _numSpaceDims * _numMarkers;
+    _count = 0;// TODO remove
 }
 
 void DirectMarkerTrackingController::constructProperties()
@@ -51,20 +52,17 @@ void DirectMarkerTrackingController::computeControls(
     // Assemble the  necessary quantities.
     // ========================================================================
     // TODO can we realize the stage just like this?
-    std::cout << "DEBUG MODEL IS: " << getModel() << std::endl;
-    getModel().getMultibodySystem().realize(s, SimTK::Stage::Position);
-    std::cout << "DEBUG AFTER REALIZE " << std::endl;
+    //getModel().getMultibodySystem().realize(s, SimTK::Stage::Position); not necessary here
     const SimTK::SimbodyMatterSubsystem & smss =
             getModel().getMatterSubsystem();
 
     // Jacobian, J; and JacobianTranspose, J^T
     // ------------------------------------------------------------------------
     Matrix Jacobian3D(_numTasks, getModel().getNumSpeeds());
-    std::cout << _mobilizedBodyIndices << std::endl;
     smss.calcStationJacobian(s, _mobilizedBodyIndices,
             _stationPositionsInBodies, Jacobian3D);
 
-    // TODO
+    // TODO 2d hack
     Matrix Jacobian(_numTasks, getModel().getNumSpeeds());
     Jacobian[0][0] = Jacobian3D[0][0];
     Jacobian[0][1] = Jacobian3D[0][1];
@@ -78,22 +76,37 @@ void DirectMarkerTrackingController::computeControls(
     // Lambda = (J * A^-1 * J^T)^-1, but in a few steps.
 
     // A^-1 * J^T
-    std::cout << "DEBUG JacobianTranspose: " << JacobianTranspose << std::endl;
+    bool withBug = true;
     Matrix jointMassMatrixInverseTimesJacobianTranspose(
                 getModel().getNumSpeeds(), _numTasks);
-    /*
-    for (int iTask = 0; iTask < _numTasks; iTask++)
+    if (withBug)
     {
-        smss.multiplyByMInv(s, JacobianTranspose.col(iTask),
-                jointMassMatrixInverseTimesJacobianTranspose.updCol(iTask));
+     //   std::cout << "DEBUG JacobianTranspose: " << JacobianTranspose << std::endl;
+        // TODO cache entry / need dynamics error on 2nd iteration.
+        for (int iTask = 0; iTask < _numTasks; iTask++)
+        {
+            smss.multiplyByMInv(s, JacobianTranspose.col(iTask),
+                    jointMassMatrixInverseTimesJacobianTranspose.updCol(iTask));
+        }
     }
-    */
+        else
+    {
+        Matrix jointMassMatrix(getModel().getNumSpeeds(), getModel().getNumSpeeds());
+        smss.calcM(s, jointMassMatrix);
+        SimTK::FactorLU jointMassMatrixLU(jointMassMatrix);
+        Matrix jointMassMatrixInverse(getModel().getNumSpeeds(), getModel().getNumSpeeds());
+        jointMassMatrixLU.inverse(jointMassMatrixInverse);
+
+        jointMassMatrixInverseTimesJacobianTranspose =
+                jointMassMatrixInverse * JacobianTranspose;
+    }
+
     // Lambda^-1 = J * A^-1 * J^T
-    std::cout << "DEBUG Jacobian: " << Jacobian << std::endl;
-    std::cout << "DEBUG jointMassMatrixInverseTimesJacobianTranspose: " << jointMassMatrixInverseTimesJacobianTranspose << std::endl;
+//    std::cout << "DEBUG Jacobian: " << Jacobian << std::endl;
+ //   std::cout << "DEBUG jointMassMatrixInverseTimesJacobianTranspose: " << jointMassMatrixInverseTimesJacobianTranspose << std::endl;
     Matrix taskMassMatrixInverse =
             Jacobian * jointMassMatrixInverseTimesJacobianTranspose;
-    std::cout << "DEBUG task mass matrix inverse: " << taskMassMatrixInverse << std::endl;
+//    std::cout << "DEBUG task mass matrix inverse: " << taskMassMatrixInverse << std::endl;
 
     // Lambda = (Lambda^-1)^-1
     SimTK::FactorLU taskMassMatrixInverseLU(taskMassMatrixInverse);
@@ -105,6 +118,7 @@ void DirectMarkerTrackingController::computeControls(
 
     // Actual (model) task vector.
     // ------------------------------------------------------------------------
+    getModel().getMultibodySystem().realize(s, SimTK::Stage::Position);
     Vector task(_numTasks);
     for (int iMarker = 0; iMarker < _numMarkers; iMarker++)
     {
@@ -130,7 +144,7 @@ void DirectMarkerTrackingController::computeControls(
     // Derivative of actual (model) task.
     // ------------------------------------------------------------------------
     // xd = J * u
-    // TODO Vector taskDot = Jacobian * s.getU();
+    Vector taskDot = Jacobian * s.getU();
 
     // Desired task vector (from 'experimental' marker positions).
     // -----------------------------------------------------------------------
@@ -174,14 +188,15 @@ void DirectMarkerTrackingController::computeControls(
     // disturbances, etc.
     // Fstar = xdd_des + kv * (xd_des - xd) + kp * (x_des - x)
     Vector desiredTaskAcceleration = //taskDotDotDesired
-                // TODO        + get_speed_gain() * (taskDotDesired - taskDot)
+                // TODO        + get_speed_gain() * (taskDotDesired - taskDot) when we have taskDotDesired.
+                        + get_speed_gain() * (- taskDot)
                         + get_position_gain() * (taskDesired - task);
 
     // Compute task-space actuation necessary to achieve above accelerations.
     // ------------------------------------------------------------------------
     // F = Lambda * Fstar + mu + p
-    std::cout << "DEBUG desiredTaskAccel: " << desiredTaskAcceleration << std::endl;
-    std::cout << "DEBUG taskMassMatrix: " << taskMassMatrix << std::endl;
+  //  std::cout << "DEBUG desiredTaskAccel: " << desiredTaskAcceleration << std::endl;
+  //  std::cout << "DEBUG taskMassMatrix: " << taskMassMatrix << std::endl;
     Vector taskActuation = taskMassMatrix * desiredTaskAcceleration;
         // TODO                       + taskCoriolis // centrifugal
         // TODO                       + taskGravity; // Gravity::getBodyForces()
@@ -195,7 +210,7 @@ void DirectMarkerTrackingController::computeControls(
     // TODO does not account for optimal force setting.
     // TODO use multiplyByStationJacobianTranspose. requires taskActuation
     // to be a Vector<Vec3>
-    std::cout << "DEBUG taskActuation: " << taskActuation << std::endl;
+   // std::cout << "DEBUG taskActuation: " << taskActuation << std::endl;
     Vector jointActuation = JacobianTranspose * taskActuation;
 
     // TODO I think I do want qdots, etc, because we are controlling coordinates.
@@ -203,21 +218,14 @@ void DirectMarkerTrackingController::computeControls(
     // Set the control signals of the actuators.
     // ========================================================================
     // TODO modify when we are more general about actuators.
-    std::cout << "DEBUG jointActuation: " << jointActuation << std::endl;
     for (int iActuator = 0; iActuator < getActuatorSet().getSize(); iActuator++)
     {
         Vector thisActuatorsControls(1, jointActuation[iActuator]);
-        std::cout << "DEBUG numact: " << getActuatorSet().getSize() << std::endl;
         const Actuator & thisActuator = getActuatorSet().get(iActuator);
-        std::cout << "DEBUG act: " << thisActuator << std::endl;
-std::cout << "thisc: " << thisActuatorsControls << std::endl;
-std::cout << "controls: " << controls << std::endl;
-std::cout << "controls size: " << controls.size() << std::endl;
-std::cout << "cset: " << getModel().getNumControls() << std::endl;
         // TODO make sure we're adding to the correct actuator.
         thisActuator.addInControls(thisActuatorsControls, controls);
     }
-    /* TODO
+    /* TODO alternative to the above loop.
     for (int iCoord = 0; iCoord < getModel().getNumCoordinates(); iCoord++)
     {
         string coordName = getModel().getCoordinateSet().get(iCoord).getName();
@@ -225,12 +233,13 @@ std::cout << "cset: " << getModel().getNumControls() << std::endl;
                     jointActuation[iCoord], controls);
     }
     */
+    _count++;
+    std::cout << "DEBUG COUNT: " << _count << std::endl;
+    std::cout << "DirectMarkerTrackingController.computeControls:  t = " << s.getTime() << std::endl;
 }
 
 void DirectMarkerTrackingController::connectToModel(Model & model)
 {
-    std::cout << "HOW MANY TIMES AM I CALLED? " << std::endl;
-
     // Time-invariant quantities required for computing the Jacobian.
     // ========================================================================
     _mobilizedBodyIndices.resize(_numMarkers);
@@ -246,9 +255,7 @@ void DirectMarkerTrackingController::connectToModel(Model & model)
 
         _stationPositionsInBodies[iMarker] = marker.getOffset();
     }
-    std::cout << "DEBUG mbn: " << _markersBodyNames << std::endl;
-    std::cout << "DEBUG mbi: " << _mobilizedBodyIndices << std::endl;
-    std::cout << "DEBUG spib: " << _stationPositionsInBodies << std::endl;
+
 
     // Add CoordinateActuator for each (enabled? TODO) coordinate.
     // ========================================================================
@@ -284,7 +291,4 @@ void DirectMarkerTrackingController::connectToModel(Model & model)
     Super::connectToModel(model);
 
     setNumControls(getActuatorSet().getSize());
-    std::cout << "DEBUG NUM CONTROLS: " << getActuatorSet().getSize() << std::endl;
-    std::cout << "DEBUG NUM CONTROLS: " << getNumControls() << std::endl;
-
 }
