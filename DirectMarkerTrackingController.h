@@ -79,7 +79,6 @@ private:
     // TODO make this const reference.
     MarkersReference * _markersRef;
     int _numMarkers;
-    SimTK::Array_<std::string> _markersBodyNames;
     SimTK::Array_<SimTK::MobilizedBodyIndex> _mobilizedBodyIndices;
     SimTK::Array_<SimTK::Vec3> _stationPositionsInBodies;
 

@@ -106,7 +106,6 @@ void DirectMarkerTrackingController::computeControls(
     // Actual (model) task vector.
     // ------------------------------------------------------------------------
     Vector task(_numTasks);
-    //TODO Vec3 currentMarkerPosInGround;
     for (int iMarker = 0; iMarker < _numMarkers; iMarker++)
     {
         // Update current marker position, expressed in ground.
@@ -116,13 +115,15 @@ void DirectMarkerTrackingController::computeControls(
                 _stationPositionsInBodies[iMarker],
                 currentMarkerPosInGround);
         */
-        x_cur_vec3 = _model->getMatterSubsystem().getMobilizedBody(parent_indx).findStationLocationInGround(s, pos_in_parent_);
+        Vec3 thisMarkerPosInGround = smss.getMobilizedBody(
+                    _mobilizedBodyIndices[iMarker]).findStationLocationInGround(
+                    s, _stationPositionsInBodies[iMarker]);
 
         // Place this Vec3 in its proper place in the task vector.
         int baseIndex = _numSpaceDims * iMarker;
         for (int iDim = 0; iDim < _numSpaceDims; iDim++)
         {
-            task[baseIndex + iDim] = currentMarkerPosInGround[iDim];
+            task[baseIndex + iDim] = thisMarkerPosInGround[iDim];
         }
     }
 
@@ -232,7 +233,6 @@ void DirectMarkerTrackingController::connectToModel(Model & model)
 
     // Time-invariant quantities required for computing the Jacobian.
     // ========================================================================
-    _markersBodyNames.resize(_numMarkers);
     _mobilizedBodyIndices.resize(_numMarkers);
     _stationPositionsInBodies.resize(_numMarkers);
     for (int iMarker = 0; iMarker < _numMarkers; iMarker++)
@@ -240,8 +240,6 @@ void DirectMarkerTrackingController::connectToModel(Model & model)
         // Get these items two for convenience:
         std::string markerName = _markersRef->getNames()[iMarker];
         const Marker & marker = model.getMarkerSet().get(markerName);
-
-        _markersBodyNames[iMarker] = marker.getBodyName();
 
         _mobilizedBodyIndices[iMarker] =
             model.getBodySet().get(marker.getBodyName()).getIndex();
