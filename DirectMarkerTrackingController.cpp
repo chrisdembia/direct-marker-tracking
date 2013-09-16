@@ -13,7 +13,7 @@ using SimTK::Vector;
 using namespace OpenSim;
 
 // TODO must be 3.
-const int DirectMarkerTrackingController::_numSpaceDims = 2;
+const int DirectMarkerTrackingController::_numSpaceDims = 3;
 
 DirectMarkerTrackingController::DirectMarkerTrackingController()
 {
@@ -58,16 +58,9 @@ void DirectMarkerTrackingController::computeControls(
 
     // Jacobian, J; and JacobianTranspose, J^T
     // ------------------------------------------------------------------------
-    Matrix Jacobian3D(_numTasks, getModel().getNumSpeeds());
-    smss.calcStationJacobian(s, _mobilizedBodyIndices,
-            _stationPositionsInBodies, Jacobian3D);
-
-    // TODO 2d hack
     Matrix Jacobian(_numTasks, getModel().getNumSpeeds());
-    Jacobian[0][0] = Jacobian3D[0][0];
-    Jacobian[0][1] = Jacobian3D[0][1];
-    Jacobian[1][0] = Jacobian3D[1][0];
-    Jacobian[1][1] = Jacobian3D[1][1];
+    smss.calcStationJacobian(s, _mobilizedBodyIndices,
+            _stationPositionsInBodies, Jacobian);
 
     Matrix JacobianTranspose = Jacobian.transpose();
 
@@ -76,29 +69,12 @@ void DirectMarkerTrackingController::computeControls(
     // Lambda = (J * A^-1 * J^T)^-1, but in a few steps.
 
     // A^-1 * J^T
-    bool withBug = true;
     Matrix jointMassMatrixInverseTimesJacobianTranspose(
                 getModel().getNumSpeeds(), _numTasks);
-    if (withBug)
+    for (int iTask = 0; iTask < _numTasks; iTask++)
     {
-     //   std::cout << "DEBUG JacobianTranspose: " << JacobianTranspose << std::endl;
-        // TODO cache entry / need dynamics error on 2nd iteration.
-        for (int iTask = 0; iTask < _numTasks; iTask++)
-        {
-            smss.multiplyByMInv(s, JacobianTranspose.col(iTask),
-                    jointMassMatrixInverseTimesJacobianTranspose.updCol(iTask));
-        }
-    }
-        else
-    {
-        Matrix jointMassMatrix(getModel().getNumSpeeds(), getModel().getNumSpeeds());
-        smss.calcM(s, jointMassMatrix);
-        SimTK::FactorLU jointMassMatrixLU(jointMassMatrix);
-        Matrix jointMassMatrixInverse(getModel().getNumSpeeds(), getModel().getNumSpeeds());
-        jointMassMatrixLU.inverse(jointMassMatrixInverse);
-
-        jointMassMatrixInverseTimesJacobianTranspose =
-                jointMassMatrixInverse * JacobianTranspose;
+        smss.multiplyByMInv(s, JacobianTranspose.col(iTask),
+                jointMassMatrixInverseTimesJacobianTranspose.updCol(iTask));
     }
 
     // Lambda^-1 = J * A^-1 * J^T

@@ -55,8 +55,6 @@ ADD_LIBRARY(${PLUGIN_NAME}
     DirectMarkerTrackingTool.cpp
     DirectMarkerTrackingController.h
     DirectMarkerTrackingController.cpp
-    TaskSpaceTask.h
-    TaskSpaceTask.cpp
     RegisterTypes_osimPlugin.h
     RegisterTypes_osimPlugin.cpp
     osimPlugin.h
@@ -76,7 +74,12 @@ INSTALL_TARGETS(. ${PLUGIN_NAME} opensim-tracker)
 FILE(GLOB DATA_FILES
     ${CMAKE_SOURCE_DIR}/double_pendulum.osim
     ${CMAKE_SOURCE_DIR}/double_pendulum_tracker_setup.xml
-    ${CMAKE_SOURCE_DIR}/markers.trc)
+    ${CMAKE_SOURCE_DIR}/markers.trc
+    ${CMAKE_SOURCE_DIR}/subject01_simbody_adjusted.osim
+    ${CMAKE_SOURCE_DIR}/subject01_walk1.trc
+    ${CMAKE_SOURCE_DIR}/subject01_walk1_grf.mot
+    ${CMAKE_SOURCE_DIR}/subject01_walk1_grf.xml
+    ${CMAKE_SOURCE_DIR}/gait2354_tracker_setup.xml)
 
 FOREACH (dataFile ${DATA_FILES})
     ADD_CUSTOM_COMMAND(
@@ -87,6 +90,4 @@ FOREACH (dataFile ${DATA_FILES})
         ${CMAKE_BINARY_DIR})
 ENDFOREACH (dataFile) 
 
-INSTALL_FILES(. FILES
-    ${CMAKE_SOURCE_DIR}/double_pendulum.osim
-    ${CMAKE_SOURCE_DIR}/markers.trc)
+INSTALL_FILES(. FILES ${DATA_FILES})
