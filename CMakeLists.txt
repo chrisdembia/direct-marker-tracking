@@ -55,6 +55,8 @@ ADD_LIBRARY(${PLUGIN_NAME}
     DirectMarkerTrackingTool.cpp
     DirectMarkerTrackingController.h
     DirectMarkerTrackingController.cpp
+    TaskSpaceTask.h
+    TaskSpaceTask.cpp
     RegisterTypes_osimPlugin.h
     RegisterTypes_osimPlugin.cpp
     osimPlugin.h
