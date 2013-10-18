@@ -5,6 +5,8 @@
 #include <OpenSim/Analyses/Kinematics.h>
 #include <OpenSim/Common/IO.h>
 #include <OpenSim/Simulation/MarkersReference.h>
+#include <OpenSim/Simulation/CoordinateReference.h>
+#include <OpenSim/Simulation/InverseKinematicsSolver.h>
 #include <OpenSim/Simulation/Manager/Manager.h>
 #include <OpenSim/Simulation/Model/Model.h>
 
@@ -165,6 +167,17 @@ bool DirectMarkerTrackingTool::run()
         // Print way too much information to cout; before we add OUR analyses.
         _model->printDetailedInfo(initState, cout);
 
+
+        // Place model in initial configuration.
+        // ====================================================================
+        /* TODO
+        SimTK::Array_<CoordinateReference> coordRefs;
+        double constraintWeight = std::numeric_limits<SimTK::Real>::infinity();
+        InverseKinematicsSolver* ikSol = new InverseKinematicsSolver(*_model, markersRef, coordRefs, constraintWeight);
+        ikSol->assemble(initState);
+        */
+
+
         // Add Analyses
         // ====================================================================
         addNecessaryAnalyses();
@@ -240,9 +253,9 @@ bool DirectMarkerTrackingTool::run()
 
         // Print results.
         // ====================================================================
-        printResults(getName(), getResultsDir());
-        _model->printControlStorage(outputPathPrefix + "controls.sto");
-        manager.getStateStorage().print(statesOutputPath);
+        printResults(getName(), getResultsDir(), 0.01);
+        // TODO _model->printControlStorage(outputPathPrefix + "controls.sto");
+        manager.getStateStorage().print(statesOutputPath, 0.01);
         // TODO unavailable controller->getPositionErrorStorage()->print(outputPathPrefix + "_pErr.sto");
         // TODO print marker errors, IK-style.
         

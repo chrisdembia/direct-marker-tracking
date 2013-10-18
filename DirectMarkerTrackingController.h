@@ -78,9 +78,10 @@ private:
 
     // TODO make this const reference.
     MarkersReference * _markersRef;
-    int _numMarkers;
+    int _numSharedMarkers;
     SimTK::Array_<SimTK::MobilizedBodyIndex> _mobilizedBodyIndices;
     SimTK::Array_<SimTK::Vec3> _stationPositionsInBodies;
+    SimTK::Array_<int> _sharedMarkerIndices;
 
     mutable int _count;//TODO
 };

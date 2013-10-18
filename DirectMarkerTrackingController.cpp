@@ -30,9 +30,6 @@ DirectMarkerTrackingController::DirectMarkerTrackingController(
     // ------------------------------------------------------------------------
     constructProperties();
 
-    // TODO may not need this member variable?
-    _numMarkers = _markersRef->getNumRefs();
-    _numTasks = _numSpaceDims * _numMarkers;
     _count = 0;// TODO remove
 }
 
@@ -96,7 +93,7 @@ void DirectMarkerTrackingController::computeControls(
     // ------------------------------------------------------------------------
     getModel().getMultibodySystem().realize(s, SimTK::Stage::Position);
     Vector task(_numTasks);
-    for (int iMarker = 0; iMarker < _numMarkers; iMarker++)
+    for (int iMarker = 0; iMarker < _numSharedMarkers; iMarker++)
     {
         // Update current marker position, expressed in ground.
         /* TODO efficiency?
@@ -130,9 +127,9 @@ void DirectMarkerTrackingController::computeControls(
     // TODO Vector taskDotDotDesired(_numTasks);
 
     // Marker positions expressed in the ground frame, and derivatives.
-    Array_<Vec3> desMarkerPos(_numMarkers);
-    // TODO Array_<Vec3> desMarkerVel(_numMarkers);
-    // TODO Array_<Vec3> desMarkerAcc(_numMarkers);
+    Array_<Vec3> desMarkerPos(_numSharedMarkers);
+    // TODO Array_<Vec3> desMarkerVel(_numSharedMarkers);
+    // TODO Array_<Vec3> desMarkerAcc(_numSharedMarkers);
 
     // Fill in the Array_'s with current state data.
     _markersRef->getValues(s, desMarkerPos);
@@ -140,15 +137,15 @@ void DirectMarkerTrackingController::computeControls(
     // TODO not implemented_markersRef->getAccelerationValues(s, desMarkerAcc);
 
     // Convert Array_'s of Vec3's into Vector's.
-    for (int iMarker = 0; iMarker < _numMarkers; iMarker++)
+    for (int iSharedMarker = 0; iSharedMarker < _numSharedMarkers; iSharedMarker++)
     {
-        int baseIndex = _numSpaceDims * iMarker;
+        int baseIndex = _numSpaceDims * iSharedMarker;
 
         for (int iDim = 0; iDim < _numSpaceDims; iDim++)
         {
-            taskDesired[baseIndex + iDim] = desMarkerPos[iMarker][iDim];
-            // TODO taskDotDesired[baseIndex + iDim] = desMarkerVel[iMarker][iDim];
-            // TODO taskDotDotDesired[baseIndex + iDim] = desMarkerAcc[iMarker][iDim];
+            taskDesired[baseIndex + iDim] = desMarkerPos[_sharedMarkerIndices[iSharedMarker]][iDim];
+            // TODO taskDotDesired[baseIndex + iDim] = desMarkerVel[_sharedMarkerIndices[iSharedMarker]][iDim];
+            // TODO taskDotDotDesired[baseIndex + iDim] = desMarkerAcc[_sharedMarkerIndices[iSharedMarker]][iDim];
         }
     }
 
@@ -186,7 +183,7 @@ void DirectMarkerTrackingController::computeControls(
     // TODO does not account for optimal force setting.
     // TODO use multiplyByStationJacobianTranspose. requires taskActuation
     // to be a Vector<Vec3>
-   // std::cout << "DEBUG taskActuation: " << taskActuation << std::endl;
+    // TODO std::cout << "DEBUG taskActuation: " << taskActuation << std::endl;
     Vector jointActuation = JacobianTranspose * taskActuation;
 
     // TODO I think I do want qdots, etc, because we are controlling coordinates.
@@ -210,27 +207,46 @@ void DirectMarkerTrackingController::computeControls(
     }
     */
     _count++;
-    std::cout << "DEBUG COUNT: " << _count << std::endl;
-    std::cout << "DirectMarkerTrackingController.computeControls:  t = " << s.getTime() << std::endl;
+    // TODO std::cout << "DEBUG COUNT: " << _count << std::endl;
+    // TODO std::cout << "DirectMarkerTrackingController.computeControls:  t = " << s.getTime() << std::endl;
+    if (_count % 500 == 0)
+    {
+        std::cout << "DirectMarkerTrackingController.computeControls:  t = " << s.getTime() << std::endl;
+    }
 }
 
 void DirectMarkerTrackingController::connectToModel(Model & model)
 {
     // Time-invariant quantities required for computing the Jacobian.
     // ========================================================================
-    _mobilizedBodyIndices.resize(_numMarkers);
-    _stationPositionsInBodies.resize(_numMarkers);
-    for (int iMarker = 0; iMarker < _numMarkers; iMarker++)
+    // TODO rename the marker indices to iSharedMarker. in general, clean up marker indices naming.
+    for (int iMarker = 0; iMarker < _markersRef->getNumRefs(); iMarker++)
+    {
+        const std::string markerName = _markersRef->getNames()[iMarker];
+        if (model.getMarkerSet().contains(markerName))
+        {
+            _sharedMarkerIndices.push_back(iMarker);
+        }
+    }
+
+    // TODO may not need this member variable?
+    _numSharedMarkers = _sharedMarkerIndices.size(); // TODO_markersRef->getNumRefs();
+    _numTasks = _numSpaceDims * _numSharedMarkers;
+
+    _mobilizedBodyIndices.resize(_numSharedMarkers);
+    _stationPositionsInBodies.resize(_numSharedMarkers);
+    for (int iSharedMarker = 0; iSharedMarker < _numSharedMarkers; iSharedMarker++)
     {
         // Get these items two for convenience:
-        std::string markerName = _markersRef->getNames()[iMarker];
+        std::string markerName = _markersRef->getNames()[_sharedMarkerIndices[iSharedMarker]];
         const Marker & marker = model.getMarkerSet().get(markerName);
 
-        _mobilizedBodyIndices[iMarker] =
+        _mobilizedBodyIndices[iSharedMarker] =
             model.getBodySet().get(marker.getBodyName()).getIndex();
 
-        _stationPositionsInBodies[iMarker] = marker.getOffset();
+        _stationPositionsInBodies[iSharedMarker] = marker.getOffset();
     }
+
 
 
     // Add CoordinateActuator for each (enabled? TODO) coordinate.
